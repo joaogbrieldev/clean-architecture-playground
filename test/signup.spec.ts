@@ -1,132 +1,149 @@
 import pgp from "pg-promise";
 import { sendRequest } from "../src/signup";
 
-const connection = pgp()("postgres://postgres:123456@localhost:5432/app");
+const request = require("supertest");
+const express = require("express");
 
-beforeEach(async () => {
-  await connection.query(
-    "DELETE FROM ccca.account WHERE email IN ('john@example.com', 'isis@example.com', 'teste@example.com', 'teste2@example.com')"
-  );
+describe("POST /signup", () => {
+  const sendRequest = jest.fn();
+
+  const app = express();
+  app.use(express.json());
+  app.post("/signup", async (req: any, res: any) => {
+    const input = req.body;
+    const result = sendRequest(input);
+    try {
+      if (typeof result === "number") {
+        res.status(422).json({ message: result });
+      } else {
+        res.json(result);
+      }
+    } catch {}
+  });
+
+  it("deve retornar 422 se sendRequest retornar um número", async () => {
+    sendRequest.mockReturnValue(100);
+
+    const response = await request(app)
+      .post("/signup")
+      .send({ username: "test", password: "123456" });
+
+    expect(response.status).toBe(422);
+    expect(response.body).toEqual({ message: 100 });
+  });
+
+  it("deve retornar um JSON válido se sendRequest retornar um objeto", async () => {
+    sendRequest.mockReturnValue({ success: true });
+
+    const response = await request(app)
+      .post("/signup")
+      .send({ username: "test", password: "123456" });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ success: true });
+  });
 });
 
-afterAll(async () => {
-  await connection.$pool.end();
-});
+describe("sendRequest function", () => {
+  const connection = pgp()("postgres://postgres:123456@localhost:5432/app");
 
-test("Deve retornar -4 se user já existe", async () => {
-  const req = {
-    body: {
+  beforeEach(async () => {
+    await connection.query(
+      "DELETE FROM ccca.account WHERE email IN ('john@example.com', 'isis@example.com', 'teste@example.com', 'teste2@example.com')"
+    );
+  });
+
+  afterAll(async () => {
+    await connection.$pool.end();
+  });
+
+  test("Deve retornar -4 se user já existe", async () => {
+    const req = {
       name: "John Doe",
       email: "john@example.com",
       cpf: "97456321558",
       carPlate: "ABC1234",
       isDriver: true,
       password: "password123",
-    },
-  };
+    };
 
-  const id = crypto.randomUUID();
+    const id = crypto.randomUUID();
 
-  await connection.query(
-    "insert into ccca.account (account_id, name, email, cpf, car_plate, is_driver, password) values ($1, $2, $3, $4, $5, $6, $7)",
-    [
-      id,
-      req.body.name,
-      req.body.email,
-      req.body.cpf,
-      req.body.carPlate,
-      req.body.isDriver,
-      req.body.password,
-    ]
-  );
+    await connection.query(
+      "insert into ccca.account (account_id, name, email, cpf, car_plate, is_driver, password) values ($1, $2, $3, $4, $5, $6, $7)",
+      [
+        id,
+        req.name,
+        req.email,
+        req.cpf,
+        req.carPlate,
+        req.isDriver,
+        req.password,
+      ]
+    );
 
-  await connection.query(
-    "insert into ccca.account (account_id, name, email, cpf, car_plate, is_driver, password) values ($1, $2, $3, $4, $5, $6, $7)",
-    [
-      crypto.randomUUID(),
-      req.body.name,
-      req.body.email,
-      req.body.cpf,
-      req.body.carPlate,
-      req.body.isDriver,
-      req.body.password,
-    ]
-  );
+    await connection.query(
+      "insert into ccca.account (account_id, name, email, cpf, car_plate, is_driver, password) values ($1, $2, $3, $4, $5, $6, $7)",
+      [
+        crypto.randomUUID(),
+        req.name,
+        req.email,
+        req.cpf,
+        req.carPlate,
+        req.isDriver,
+        req.password,
+      ]
+    );
 
-  const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn().mockReturnThis(),
-  };
+    const result = await sendRequest(req);
 
-  await sendRequest(req, res);
+    expect(result).toStrictEqual(-4);
+  });
 
-  expect(res.json).toHaveBeenCalledWith({ message: -4 });
-});
-
-test("Deve retornar -3 se nome é inválido", async () => {
-  const req = {
-    body: {
+  test("Deve retornar -3 se nome é inválido", async () => {
+    const req = {
       name: "A",
       email: "isis@example.com",
       cpf: "97456321558",
       carPlate: "ABC1234",
       isDriver: true,
       password: "password123",
-    },
-  };
+    };
 
-  const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn().mockReturnThis(),
-  };
+    const result = await sendRequest(req);
 
-  await sendRequest(req, res);
+    expect(result).toStrictEqual(-3);
+  });
 
-  expect(res.json).toHaveBeenCalledWith({ message: -3 });
-});
-
-test("Deve retornar -2 se cpf é inválido", async () => {
-  const req = {
-    body: {
+  test("Deve retornar -2 se email é inválido", async () => {
+    const req = {
       name: "John Doe",
-      email: "teste@example.com",
-      cpf: null,
+      email: "a",
+      cpf: "97456321558",
       carPlate: "ABC1234",
       isDriver: true,
       password: "password123",
-    },
-  };
+    };
 
-  const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn().mockReturnThis(),
-  };
+    const result = await sendRequest(req);
 
-  await sendRequest(req, res);
+    expect(result).toStrictEqual(-2);
+  });
 
-  expect(res.json).toHaveBeenCalledWith({ message: -1 });
-});
-
-test("Deve retornar sucesso", async () => {
-  const req = {
-    body: {
+  test("Deve retornar sucesso", async () => {
+    const req = {
       name: "John Doe",
       email: "teste2@example.com",
       cpf: "97456321558",
       carPlate: "ABC1234",
       isDriver: true,
       password: "password123",
-    },
-  };
+    };
 
-  const res = {
-    status: jest.fn().mockReturnThis(),
-    json: jest.fn(),
-  };
+    const result = await sendRequest(req);
 
-  await sendRequest(req, res);
-
-  expect(res.json).toHaveBeenCalledWith({
-    accountId: expect.any(String),
+    expect(result).toStrictEqual({
+      accountId: expect.any(String),
+    });
   });
 });
