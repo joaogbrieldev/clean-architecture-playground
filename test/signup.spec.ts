@@ -130,6 +130,21 @@ describe("sendRequest function", () => {
     expect(result).toStrictEqual(-2);
   });
 
+  test("Deve retornar -1 se cpf é inválido", async () => {
+    const req = {
+      name: "John Doe",
+      email: "isis@example.com",
+      cpf: "11",
+      carPlate: "ABC1234",
+      isDriver: true,
+      password: "password123",
+    };
+
+    const result = await sendRequest(req);
+
+    expect(result).toStrictEqual(-1);
+  });
+
   test("Deve retornar sucesso", async () => {
     const req = {
       name: "John Doe",

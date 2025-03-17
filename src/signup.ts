@@ -30,9 +30,9 @@ export async function sendRequest(input: any) {
     if (!validarNome(input.name)) return -3;
     if (!validarEmail(input.email)) return -2;
     if (!validateCpf(input.cpf)) return -1;
-    if (input.isDriver) {
-      if (!validarDriver(input.carPlate)) return -5;
-    }
+    if (input.isDriver && !validarDriver(input.carPlate))
+      throw new Error("Invalid carPlate");
+
     await connection.query(
       "insert into ccca.account (account_id, name, email, cpf, car_plate, is_passenger, is_driver, password) values ($1, $2, $3, $4, $5, $6, $7, $8)",
       [
@@ -64,7 +64,9 @@ app.post("/signup", async function (req, res) {
     } else {
       res.json(result);
     }
-  } catch {}
+  } catch (e: any) {
+    res.status(422).json({ message: e.message });
+  }
 });
 
 app.listen(3000);
