@@ -126,7 +126,6 @@ test("Deve criar uma conta de passageiro", async function () {
   };
   const outputSignup = await signup.signup(input);
   const outputGetAccount = await getAccount.getAccount(outputSignup.accountId);
-  console.log(outputGetAccount);
   expect(outputSignup.accountId).toBeDefined();
   expect(outputGetAccount.name).toBe(input.name);
   expect(outputGetAccount.email).toBe(input.email);
