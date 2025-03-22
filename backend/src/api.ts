@@ -11,7 +11,6 @@ app.use(cors());
 
 app.post("/signup", async function (req, res) {
   const input = req.body;
-  console.log("Signup", input);
   try {
     const accountDAO = new AccountDAODatabase();
     const mailerGateway = new MailerGatewayMemory();
