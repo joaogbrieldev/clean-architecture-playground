@@ -76,25 +76,25 @@ test("Não deve solicitar uma corrida se a conta não for de um passageiro", asy
   );
 });
 
-// test(" deve definir o status como requested", async function () {
-//   const input = {
-//     name: "John Doe",
-//     email: `john.doe${Math.random()}@gmail.com`,
-//     cpf: "9745632155",
-//     password: "123456",
-//     isPassenger: false,
-//   };
+test("Não pode solicitar uma corrida se já tiver outra ativa", async function () {
+  const input = {
+    name: "John Doe",
+    email: `john.doe${Math.random()}@gmail.com`,
+    cpf: "97456321558",
+    password: "123456",
+    isPassenger: true,
+  };
 
-//   const outputSignup = await signup.signup(input);
-//   const mockRide = {
-//     passenger_id: outputSignup.accountId,
-//     from_lat: -23.55052,
-//     from_long: -46.633308,
-//     to_lat: -23.551321,
-//     to_long: -46.635678,
-//   };
-//   const outputRequestRide = await requestRide.execute(mockRide);
-//   expect(outputRequestRide.rideId).toBeDefined();
-//   expect(outputRequestRide.date).toStrictEqual(new Date());
-//   expect(outputRequestRide.status).toStrictEqual("requested");
-// });
+  const outputSignup = await signup.signup(input);
+  const inputRequestRide = {
+    passengerId: outputSignup.accountId,
+    fromLat: -23.55052,
+    fromLong: -46.633308,
+    toLat: -23.551321,
+    toLong: -46.635678,
+  };
+  await requestRide.execute(inputRequestRide);
+  await expect(requestRide.execute(inputRequestRide)).rejects.toThrow(
+    new Error("Passenger already have an active ride")
+  );
+});
