@@ -1,11 +1,12 @@
 import pgp from "pg-promise";
+import Account from "./Account";
 import { GetAccountData } from "./GetAccount";
 import { SignupData } from "./Signup";
 
 // DAO - Data Access Object
 
 export default interface AccountDAO extends SignupData, GetAccountData {
-  saveAccount(account: any): Promise<any>;
+  saveAccount(account: Account): Promise<any>;
   getAccountByEmail(email: string): Promise<any>;
   getAccountById(accountId: string): Promise<any>;
 }
