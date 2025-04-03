@@ -1,10 +1,10 @@
+import { AccountRepositoryDatabase } from "../src/AccountRepository";
 import GetAccount from "../src/GetAccount";
 import { MailerGatewayMemory } from "../src/MailerGateway";
 import { RideDAODatabase } from "../src/RideDAO";
 import Signup from "../src/Signup";
 import GetRide from "../src/application/usecase/GetRide";
 import RequestRide from "../src/application/usecase/RequestRide";
-import { AccountDAODatabase } from "../src/data";
 
 let signup: Signup;
 let getAccount: GetAccount;
@@ -13,7 +13,7 @@ let getRide: GetRide;
 
 beforeEach(() => {
   // const accountDAO = new AccountDAOMemory();
-  const accountDAO = new AccountDAODatabase();
+  const accountDAO = new AccountRepositoryDatabase();
   const rideDAO = new RideDAODatabase();
   const mailerGateway = new MailerGatewayMemory();
   signup = new Signup(accountDAO, mailerGateway);
@@ -31,7 +31,7 @@ test("Deve solicitar uma corrida", async function () {
     isPassenger: true,
   };
 
-  const outputSignup = await signup.signup(input);
+  const outputSignup = await signup.execute(input);
   const inputRequestRide = {
     passengerId: outputSignup.accountId,
     fromLat: -23.55052,
@@ -63,7 +63,7 @@ test("Não deve solicitar uma corrida se a conta não for de um passageiro", asy
     carPlate: "ABC1234",
   };
 
-  const outputSignup = await signup.signup(input);
+  const outputSignup = await signup.execute(input);
   const inputRequestRide = {
     passengerId: outputSignup.accountId,
     fromLat: -23.55052,
@@ -85,7 +85,7 @@ test("Não pode solicitar uma corrida se já tiver outra ativa", async function 
     isPassenger: true,
   };
 
-  const outputSignup = await signup.signup(input);
+  const outputSignup = await signup.execute(input);
   const inputRequestRide = {
     passengerId: outputSignup.accountId,
     fromLat: -23.55052,

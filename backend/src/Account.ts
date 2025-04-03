@@ -8,6 +8,7 @@ export default class Account {
     readonly cpf: string,
     readonly password: string,
     readonly carPlate: string,
+
     readonly isPassenger: boolean,
     readonly isDriver: boolean
   ) {

@@ -1,5 +1,5 @@
+import AccountDAO from "../../AccountRepository";
 import RideDAO from "../../RideDAO";
-import AccountDAO from "../../data";
 
 export default class RequestRide {
   constructor(readonly accountDAO: AccountDAO, readonly rideDAO: RideDAO) {}

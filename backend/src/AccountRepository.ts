@@ -1,18 +1,14 @@
 import pgp from "pg-promise";
 import Account from "./Account";
-import { GetAccountData } from "./GetAccount";
-import { SignupData } from "./Signup";
 
-// DAO - Data Access Object
-
-export default interface AccountDAO extends SignupData, GetAccountData {
-  saveAccount(account: Account): Promise<any>;
-  getAccountByEmail(email: string): Promise<any>;
-  getAccountById(accountId: string): Promise<any>;
+export default interface AccountRepository {
+  saveAccount(account: Account): Promise<void>;
+  getAccountByEmail(email: string): Promise<Account | undefined>;
+  getAccountById(accountId: string): Promise<Account>;
 }
 
-export class AccountDAODatabase implements AccountDAO {
-  async getAccountByEmail(email: string) {
+export class AccountRepositoryDatabase implements AccountRepository {
+  async getAccountByEmail(email: string): Promise<Account | undefined> {
     const connection = pgp()("postgres://postgres:123456@localhost:5432/app");
     const [accountData] = await connection.query(
       "select * from ccca.account where email = $1",
@@ -20,16 +16,16 @@ export class AccountDAODatabase implements AccountDAO {
     );
     await connection.$pool.end();
     if (!accountData) return;
-    return {
-      accountId: accountData.account_id,
-      name: accountData.name,
-      email: accountData.email,
-      cpf: accountData.cpf,
-      password: accountData.password,
-      carPlate: accountData.car_plate,
-      isPassenger: accountData.is_passenger,
-      isDriver: accountData.is_driver,
-    };
+    return new Account(
+      accountData.account_id,
+      accountData.name,
+      accountData.email,
+      accountData.cpf,
+      accountData.car_plate,
+      accountData.password,
+      accountData.is_passenger,
+      accountData.is_driver
+    );
   }
 
   async getAccountById(accountId: string) {
@@ -39,16 +35,16 @@ export class AccountDAODatabase implements AccountDAO {
       [accountId]
     );
     await connection.$pool.end();
-    return {
-      accountId: accountData.account_id,
-      name: accountData.name,
-      email: accountData.email,
-      cpf: accountData.cpf,
-      password: accountData.password,
-      carPlate: accountData.car_plate,
-      isPassenger: accountData.is_passenger,
-      isDriver: accountData.is_driver,
-    };
+    return new Account(
+      accountData.account_id,
+      accountData.name,
+      accountData.email,
+      accountData.cpf,
+      accountData.password,
+      accountData.car_plate,
+      accountData.is_passenger,
+      accountData.is_driver
+    );
   }
 
   async saveAccount(account: any) {
@@ -70,7 +66,7 @@ export class AccountDAODatabase implements AccountDAO {
   }
 }
 
-export class AccountDAOMemory implements AccountDAO {
+export class AccountDAOMemory implements AccountRepository {
   accounts: any[];
 
   constructor() {
@@ -82,9 +78,11 @@ export class AccountDAOMemory implements AccountDAO {
   }
 
   async getAccountById(accountId: string) {
-    return this.accounts.find(
+    const account = this.accounts.find(
       (account: any) => account.accountId === accountId
     );
+    if (!account) throw new Error("");
+    return account;
   }
 
   async saveAccount(account: any) {

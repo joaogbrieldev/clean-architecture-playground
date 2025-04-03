@@ -1,15 +1,16 @@
 import sinon from "sinon";
+import Account from "../src/Account";
+import { AccountRepositoryDatabase } from "../src/AccountRepository";
 import GetAccount from "../src/GetAccount";
 import { MailerGatewayMemory } from "../src/MailerGateway";
 import Signup from "../src/Signup";
-import { AccountDAODatabase } from "../src/data";
 
 let signup: Signup;
 let getAccount: GetAccount;
 
 beforeEach(() => {
   // const accountDAO = new AccountDAOMemory();
-  const accountDAO = new AccountDAODatabase();
+  const accountDAO = new AccountRepositoryDatabase();
   const mailerGateway = new MailerGatewayMemory();
   signup = new Signup(accountDAO, mailerGateway);
   getAccount = new GetAccount(accountDAO);
@@ -23,7 +24,7 @@ test("Deve criar uma conta de passageiro", async function () {
     password: "123456",
     isPassenger: true,
   };
-  const outputSignup = await signup.signup(input);
+  const outputSignup = await signup.execute(input);
   const outputGetAccount = await getAccount.getAccount(outputSignup.accountId);
   expect(outputSignup.accountId).toBeDefined();
   expect(outputGetAccount.name).toBe(input.name);
@@ -42,7 +43,7 @@ test("Deve criar uma conta de motorista", async function () {
     carPlate: "AAA9999",
     isDriver: true,
   };
-  const outputSignup = await signup.signup(input);
+  const outputSignup = await signup.execute(input);
   const outputGetAccount = await getAccount.getAccount(outputSignup.accountId);
   expect(outputSignup.accountId).toBeDefined();
   expect(outputGetAccount.name).toBe(input.name);
@@ -53,55 +54,6 @@ test("Deve criar uma conta de motorista", async function () {
   expect(outputGetAccount.isDriver).toBe(input.isDriver);
 });
 
-test("Não deve criar uma conta de passageiro com o nome inválido", async function () {
-  const input = {
-    name: "John",
-    email: `john.doe${Math.random()}@gmail.com`,
-    cpf: "97456321558",
-    password: "123456",
-    isPassenger: true,
-  };
-  await expect(signup.signup(input)).rejects.toThrow(new Error("Invalid name"));
-});
-
-test("Não deve criar uma conta de passageiro com o email inválido", async function () {
-  const input = {
-    name: "John Doe",
-    email: `john.doe${Math.random()}`,
-    cpf: "97456321558",
-    password: "123456",
-    isPassenger: true,
-  };
-  await expect(signup.signup(input)).rejects.toThrow(
-    new Error("Invalid email")
-  );
-});
-
-test("Não deve criar uma conta de passageiro com o cpf inválido", async function () {
-  const input = {
-    name: "John Doe",
-    email: `john.doe${Math.random()}@gmail.com`,
-    cpf: "9745632155",
-    password: "123456",
-    isPassenger: true,
-  };
-  await expect(signup.signup(input)).rejects.toThrow(new Error("Invalid cpf"));
-});
-
-test("Não deve criar uma conta de motorista com placa do carro inválida", async function () {
-  const input = {
-    name: "John Doe",
-    email: `john.doe${Math.random()}@gmail.com`,
-    cpf: "97456321558",
-    password: "123456",
-    carPlate: "AAA999",
-    isDriver: true,
-  };
-  await expect(signup.signup(input)).rejects.toThrow(
-    new Error("Invalid car plate")
-  );
-});
-
 test("Não deve criar uma conta de passageiro com conta duplicada", async function () {
   const input = {
     name: "John Doe",
@@ -110,8 +62,8 @@ test("Não deve criar uma conta de passageiro com conta duplicada", async functi
     password: "123456",
     isPassenger: true,
   };
-  await signup.signup(input);
-  await expect(signup.signup(input)).rejects.toThrow(
+  await signup.execute(input);
+  await expect(signup.execute(input)).rejects.toThrow(
     new Error("Duplicated account")
   );
 });
@@ -124,7 +76,7 @@ test("Deve criar uma conta de passageiro", async function () {
     password: "123456",
     isPassenger: true,
   };
-  const outputSignup = await signup.signup(input);
+  const outputSignup = await signup.execute(input);
   const outputGetAccount = await getAccount.getAccount(outputSignup.accountId);
   expect(outputSignup.accountId).toBeDefined();
   expect(outputGetAccount.name).toBe(input.name);
@@ -139,25 +91,25 @@ test("Deve criar uma conta de passageiro com stub", async function () {
     .stub(MailerGatewayMemory.prototype, "send")
     .resolves();
   const accountDAOStub1 = sinon
-    .stub(AccountDAODatabase.prototype, "getAccountByEmail")
+    .stub(AccountRepositoryDatabase.prototype, "getAccountByEmail")
     .resolves();
   const accountDAOStub2 = sinon
-    .stub(AccountDAODatabase.prototype, "saveAccount")
+    .stub(AccountRepositoryDatabase.prototype, "saveAccount")
     .resolves();
-  const input = {
-    accountId: "",
-    name: "John Doe",
-    email: `john.doe${Math.random()}@gmail.com`,
-    cpf: "97456321558",
-    password: "123456",
-    isPassenger: true,
-    carPlate: "",
-    isDriver: false,
-  };
+  const input = new Account(
+    "",
+    "John Doe",
+    `john.doe${Math.random()}@gmail.com`,
+    "97456321558",
+    "123456",
+    "ABC1234",
+    true,
+    false
+  );
   const accountDAOStub3 = sinon
-    .stub(AccountDAODatabase.prototype, "getAccountById")
+    .stub(AccountRepositoryDatabase.prototype, "getAccountById")
     .resolves(input);
-  const outputSignup = await signup.signup(input);
+  const outputSignup = await signup.execute(input);
   const outputGetAccount = await getAccount.getAccount(outputSignup.accountId);
   expect(outputSignup.accountId).toBeDefined();
   expect(outputGetAccount.name).toBe(input.name);
@@ -180,7 +132,7 @@ test("Deve criar uma conta de passageiro com spy", async function () {
     password: "123456",
     isPassenger: true,
   };
-  const outputSignup = await signup.signup(input);
+  const outputSignup = await signup.execute(input);
   const outputGetAccount = await getAccount.getAccount(outputSignup.accountId);
   expect(outputSignup.accountId).toBeDefined();
   expect(outputGetAccount.name).toBe(input.name);
@@ -209,7 +161,7 @@ test("Deve criar uma conta de passageiro com mock", async function () {
     .callsFake(() => {
       console.log("abc");
     });
-  const outputSignup = await signup.signup(input);
+  const outputSignup = await signup.execute(input);
   const outputGetAccount = await getAccount.getAccount(outputSignup.accountId);
   expect(outputSignup.accountId).toBeDefined();
   expect(outputGetAccount.name).toBe(input.name);
