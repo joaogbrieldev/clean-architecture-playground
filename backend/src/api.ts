@@ -1,39 +1,31 @@
-import cors from "cors";
-import express from "express";
 import { AccountRepositoryDatabase } from "./AccountRepository";
 import GetAccount from "./GetAccount";
+import { ExpressAdapter } from "./HttpServer";
 import { MailerGatewayMemory } from "./MailerGateway";
 import Signup from "./Signup";
-import DatabaseConnection, {
-  PgPromiseAdapter,
-} from "./infra/database/DatabaseConnection";
+import { PgPromiseAdapter } from "./infra/database/DatabaseConnection";
 
-const app = express();
-app.use(express.json());
-app.use(cors());
+const httpServer = new ExpressAdapter();
 
-app.post("/signup", async function (req, res) {
-  const input = req.body;
-  try {
-    let connection: DatabaseConnection;
-    connection = new PgPromiseAdapter();
-    const accountDAO = new AccountRepositoryDatabase(connection);
-    const mailerGateway = new MailerGatewayMemory();
-    const signup = new Signup(accountDAO, mailerGateway);
-    const output = await signup.execute(input);
-    res.json(output);
-  } catch (e: any) {
-    res.status(422).json({ message: e.message });
+const connection = new PgPromiseAdapter();
+
+httpServer.register("post", "/signup", async function (params: any, body: any) {
+  const accountRepository = new AccountRepositoryDatabase(connection);
+  const mailerGateway = new MailerGatewayMemory();
+  const signup = new Signup(accountRepository, mailerGateway);
+  const output = await signup.execute(body);
+  return output;
+});
+
+httpServer.register(
+  "get",
+  "/accounts/:accountId",
+  async function (params: any, body: any) {
+    const accountRepository = new AccountRepositoryDatabase(connection);
+    const getAccount = new GetAccount(accountRepository);
+    const output = await getAccount.execute(params);
+    return output;
   }
-});
+);
 
-app.get("/accounts/:accountId", async function (req, res) {
-  let connection: DatabaseConnection;
-  connection = new PgPromiseAdapter();
-  const accountDAO = new AccountRepositoryDatabase(connection);
-  const getAccount = new GetAccount(accountDAO);
-  const output = await getAccount.execute(req.params.accountId);
-  res.json(output);
-});
-
-app.listen(3000);
+httpServer.listen(3000);
