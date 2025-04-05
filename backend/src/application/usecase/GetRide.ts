@@ -1,14 +1,24 @@
-import RideDAO from "../../RideDAO";
+import AccountRepository from "../../AccountRepository";
+import RideRepository from "../../RideRepository";
 
 export default class GetRide {
-  constructor(readonly rideDAO: RideDAO) {}
-  async execute(rideId: any): Promise<Output> {
+  constructor(
+    readonly accountDAO: AccountRepository,
+    readonly rideDAO: RideRepository
+  ) {}
+
+  async execute(rideId: string): Promise<Output> {
     const ride = await this.rideDAO.getRideById(rideId);
+    const passengerAccount = await this.accountDAO.getAccountById(
+      ride.passengerId
+    );
     return {
       ...ride,
+      passengerName: passengerAccount.name,
     };
   }
 }
+
 type Output = {
   rideId: string;
   passengerId: string;

@@ -2,7 +2,9 @@ import Account from "./Account";
 import AccountRepository from "./AccountRepository";
 import MailerGateway from "./MailerGateway";
 
+// Use case
 export default class Signup {
+  // DIP - Dependency Inversion Principle
   constructor(
     readonly accountRepository: AccountRepository,
     readonly mailerGateway: MailerGateway
@@ -13,8 +15,8 @@ export default class Signup {
       input.name,
       input.email,
       input.cpf,
-      input.password,
       input.carPlate,
+      input.password,
       input.isPassenger,
       input.isDriver
     );

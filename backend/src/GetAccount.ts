@@ -1,10 +1,10 @@
-import { AccountRepositoryDatabase } from "./AccountRepository";
+import AccountRepository from "./AccountRepository";
 
 export default class GetAccount {
-  constructor(readonly accountRepoisitory: AccountRepositoryDatabase) {}
+  constructor(readonly accountRepository: AccountRepository) {}
 
-  async getAccount(accountId: string) {
-    const accountData = await this.accountRepoisitory.getAccountById(accountId);
+  async execute(accountId: string) {
+    const accountData = await this.accountRepository.getAccountById(accountId);
     return accountData;
   }
 }

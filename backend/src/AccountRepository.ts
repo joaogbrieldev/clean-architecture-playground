@@ -1,5 +1,7 @@
-import pgp from "pg-promise";
+// Repository - Mediar a relação entre a camada de domínio (entities) e o mecanismo de persistência
+
 import Account from "./Account";
+import DatabaseConnection from "./infra/database/DatabaseConnection";
 
 export default interface AccountRepository {
   saveAccount(account: Account): Promise<void>;
@@ -8,13 +10,13 @@ export default interface AccountRepository {
 }
 
 export class AccountRepositoryDatabase implements AccountRepository {
-  async getAccountByEmail(email: string): Promise<Account | undefined> {
-    const connection = pgp()("postgres://postgres:123456@localhost:5432/app");
-    const [accountData] = await connection.query(
+  constructor(readonly connection: DatabaseConnection) {}
+
+  async getAccountByEmail(email: string) {
+    const [accountData] = await this.connection.query(
       "select * from ccca.account where email = $1",
       [email]
     );
-    await connection.$pool.end();
     if (!accountData) return;
     return new Account(
       accountData.account_id,
@@ -29,27 +31,24 @@ export class AccountRepositoryDatabase implements AccountRepository {
   }
 
   async getAccountById(accountId: string) {
-    const connection = pgp()("postgres://postgres:123456@localhost:5432/app");
-    const [accountData] = await connection.query(
+    const [accountData] = await this.connection.query(
       "select * from ccca.account where account_id = $1",
       [accountId]
     );
-    await connection.$pool.end();
     return new Account(
       accountData.account_id,
       accountData.name,
       accountData.email,
       accountData.cpf,
-      accountData.password,
       accountData.car_plate,
+      accountData.password,
       accountData.is_passenger,
       accountData.is_driver
     );
   }
 
-  async saveAccount(account: any) {
-    const connection = pgp()("postgres://postgres:123456@localhost:5432/app");
-    await connection.query(
+  async saveAccount(account: Account) {
+    await this.connection.query(
       "insert into ccca.account (account_id, name, email, cpf, car_plate, is_passenger, is_driver, password) values ($1, $2, $3, $4, $5, $6, $7, $8)",
       [
         account.accountId,
@@ -62,12 +61,11 @@ export class AccountRepositoryDatabase implements AccountRepository {
         account.password,
       ]
     );
-    await connection.$pool.end();
   }
 }
 
-export class AccountDAOMemory implements AccountRepository {
-  accounts: any[];
+export class AccountRepositoryMemory implements AccountRepository {
+  accounts: Account[];
 
   constructor() {
     this.accounts = [];
@@ -81,11 +79,11 @@ export class AccountDAOMemory implements AccountRepository {
     const account = this.accounts.find(
       (account: any) => account.accountId === accountId
     );
-    if (!account) throw new Error("");
+    if (!account) throw new Error();
     return account;
   }
 
-  async saveAccount(account: any) {
+  async saveAccount(account: Account) {
     this.accounts.push(account);
   }
 }

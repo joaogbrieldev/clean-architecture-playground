@@ -1,14 +1,15 @@
+import crypto from "crypto";
 import { validateCpf } from "./validateCpf";
 
+// Entity
 export default class Account {
   constructor(
     readonly accountId: string,
     readonly name: string,
     readonly email: string,
     readonly cpf: string,
-    readonly password: string,
     readonly carPlate: string,
-
+    readonly password: string,
     readonly isPassenger: boolean,
     readonly isDriver: boolean
   ) {
@@ -31,12 +32,13 @@ export default class Account {
     return carPlate.match(/[A-Z]{3}[0-9]{4}/);
   }
 
+  // Static Factory Method
   static create(
     name: string,
     email: string,
     cpf: string,
-    password: string,
     carPlate: string,
+    password: string,
     isPassenger: boolean,
     isDriver: boolean
   ) {
@@ -46,8 +48,8 @@ export default class Account {
       name,
       email,
       cpf,
-      password,
       carPlate,
+      password,
       isPassenger,
       isDriver
     );

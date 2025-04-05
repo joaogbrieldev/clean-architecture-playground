@@ -1,21 +1,22 @@
-import pgp from "pg-promise";
+// Repository
 
-// DAO - Data Access Object
+import Ride from "./Ride";
+import DatabaseConnection from "./infra/database/DatabaseConnection";
 
-export default interface RideDAO {
-  saveRide(ride: any): Promise<any>;
-  getRideById(accountId: string): Promise<any>;
-  hasActiveRideByPassengerId(accountId: string): Promise<boolean>;
+export default interface RideRepository {
+  saveRide(ride: Ride): Promise<void>;
+  getRideById(rideId: string): Promise<Ride>;
+  hasActiveRideByPassengerId(passengerId: string): Promise<boolean>;
 }
 
-export class RideDAODatabase implements RideDAO {
+export class RideRepositoryDatabase implements RideRepository {
+  constructor(readonly connection: DatabaseConnection) {}
+
   async getRideById(rideId: string) {
-    const connection = pgp()("postgres://postgres:123456@localhost:5432/app");
-    const [rideData] = await connection.query(
+    const [rideData] = await this.connection.query(
       "select * from ccca.ride where ride_id = $1",
       [rideId]
     );
-    await connection.$pool.end();
     return {
       rideId: rideData.ride_id,
       passengerId: rideData.passenger_id,
@@ -32,8 +33,7 @@ export class RideDAODatabase implements RideDAO {
   }
 
   async saveRide(ride: any) {
-    const connection = pgp()("postgres://postgres:123456@localhost:5432/app");
-    await connection.query(
+    await this.connection.query(
       "insert into ccca.ride (ride_id, passenger_id, driver_id, from_lat, from_long, to_lat, to_long, fare, distance, status, date) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
       [
         ride.rideId,
@@ -49,15 +49,13 @@ export class RideDAODatabase implements RideDAO {
         ride.date,
       ]
     );
-    await connection.$pool.end();
   }
-  async hasActiveRideByPassengerId(passengerId: string): Promise<any> {
-    const connection = pgp()("postgres://postgres:123456@localhost:5432/app");
-    const ridesData = await connection.query(
-      "select * from ccca.ride where passenger_id = $1 and status <> 'completed' ",
+
+  async hasActiveRideByPassengerId(passengerId: string) {
+    const [rideData] = await this.connection.query(
+      "select 1 from ccca.ride where passenger_id = $1 and status not in ('completed', 'cancelled') limit 1",
       [passengerId]
     );
-    await connection.$pool.end();
-    return ridesData.length > 0;
+    return !!rideData;
   }
 }

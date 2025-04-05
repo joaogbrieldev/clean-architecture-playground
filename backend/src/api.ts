@@ -4,6 +4,9 @@ import { AccountRepositoryDatabase } from "./AccountRepository";
 import GetAccount from "./GetAccount";
 import { MailerGatewayMemory } from "./MailerGateway";
 import Signup from "./Signup";
+import DatabaseConnection, {
+  PgPromiseAdapter,
+} from "./infra/database/DatabaseConnection";
 
 const app = express();
 app.use(express.json());
@@ -12,7 +15,9 @@ app.use(cors());
 app.post("/signup", async function (req, res) {
   const input = req.body;
   try {
-    const accountDAO = new AccountRepositoryDatabase();
+    let connection: DatabaseConnection;
+    connection = new PgPromiseAdapter();
+    const accountDAO = new AccountRepositoryDatabase(connection);
     const mailerGateway = new MailerGatewayMemory();
     const signup = new Signup(accountDAO, mailerGateway);
     const output = await signup.execute(input);
@@ -23,9 +28,11 @@ app.post("/signup", async function (req, res) {
 });
 
 app.get("/accounts/:accountId", async function (req, res) {
-  const accountDAO = new AccountRepositoryDatabase();
+  let connection: DatabaseConnection;
+  connection = new PgPromiseAdapter();
+  const accountDAO = new AccountRepositoryDatabase(connection);
   const getAccount = new GetAccount(accountDAO);
-  const output = await getAccount.getAccount(req.params.accountId);
+  const output = await getAccount.execute(req.params.accountId);
   res.json(output);
 });
 
