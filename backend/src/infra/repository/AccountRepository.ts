@@ -1,7 +1,7 @@
 // Repository - Mediar a relação entre a camada de domínio (entities) e o mecanismo de persistência
 
-import Account from "./Account";
-import DatabaseConnection from "./infra/database/DatabaseConnection";
+import Account from "../../domain/Account";
+import DatabaseConnection from "../database/DatabaseConnection";
 
 export default interface AccountRepository {
   saveAccount(account: Account): Promise<void>;

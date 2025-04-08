@@ -1,13 +1,13 @@
-import { AccountRepositoryDatabase } from "../src/AccountRepository";
-import GetAccount from "../src/GetAccount";
-import { MailerGatewayMemory } from "../src/MailerGateway";
-import { RideRepositoryDatabase } from "../src/RideRepository";
-import Signup from "../src/Signup";
+import GetAccount from "../src/application/usecase/GetAccount";
 import GetRide from "../src/application/usecase/GetRide";
 import RequestRide from "../src/application/usecase/RequestRide";
+import Signup from "../src/application/usecase/Signup";
 import DatabaseConnection, {
   PgPromiseAdapter,
 } from "../src/infra/database/DatabaseConnection";
+import { MailerGatewayMemory } from "../src/infra/gateway/MailerGateway";
+import { AccountRepositoryDatabase } from "../src/infra/repository/AccountRepository";
+import { RideRepositoryDatabase } from "../src/infra/repository/RideRepository";
 
 let connection: DatabaseConnection;
 let signup: Signup;
