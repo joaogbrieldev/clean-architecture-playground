@@ -1,4 +1,4 @@
-import Account from "../../domain/Account";
+import Account from "../../domain/entity/Account";
 import MailerGateway from "../../infra/gateway/MailerGateway";
 import AccountRepository from "../../infra/repository/AccountRepository";
 
@@ -21,13 +21,13 @@ export default class Signup {
       input.isDriver
     );
     const existingAccount = await this.accountRepository.getAccountByEmail(
-      account.email
+      account.getEmail()
     );
     if (existingAccount) throw new Error("Duplicated account");
     await this.accountRepository.saveAccount(account);
-    await this.mailerGateway.send(account.email, "Welcome", "...");
+    await this.mailerGateway.send(account.getEmail(), "Welcome", "...");
     return {
-      accountId: account.accountId,
+      accountId: account.getAccountId(),
     };
   }
 }

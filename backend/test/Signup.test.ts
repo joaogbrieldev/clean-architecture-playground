@@ -1,7 +1,7 @@
 import sinon from "sinon";
 import GetAccount from "../src/application/usecase/GetAccount";
 import Signup from "../src/application/usecase/Signup";
-import Account from "../src/domain/Account";
+import Account from "../src/domain/entity/Account";
 import DatabaseConnection, {
   PgPromiseAdapter,
 } from "../src/infra/database/DatabaseConnection";

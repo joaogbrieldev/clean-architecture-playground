@@ -1,6 +1,6 @@
 // Repository - Mediar a relação entre a camada de domínio (entities) e o mecanismo de persistência
 
-import Account from "../../domain/Account";
+import Account from "../../domain/entity/Account";
 import DatabaseConnection from "../database/DatabaseConnection";
 
 export default interface AccountRepository {
@@ -51,14 +51,14 @@ export class AccountRepositoryDatabase implements AccountRepository {
     await this.connection.query(
       "insert into ccca.account (account_id, name, email, cpf, car_plate, is_passenger, is_driver, password) values ($1, $2, $3, $4, $5, $6, $7, $8)",
       [
-        account.accountId,
-        account.name,
-        account.email,
-        account.cpf,
-        account.carPlate,
+        account.getAccountId(),
+        account.getName(),
+        account.getEmail(),
+        account.getCpf(),
+        account.getCarPlate(),
         !!account.isPassenger,
         !!account.isDriver,
-        account.password,
+        account.getPassword(),
       ]
     );
   }

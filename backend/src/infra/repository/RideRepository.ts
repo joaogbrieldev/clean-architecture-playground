@@ -1,12 +1,13 @@
 // Repository
 
-import Ride from "../../domain/Ride";
+import Ride from "../../domain/entity/Ride";
 import DatabaseConnection from "../database/DatabaseConnection";
 
 export default interface RideRepository {
   saveRide(ride: Ride): Promise<void>;
   getRideById(rideId: string): Promise<Ride>;
   hasActiveRideByPassengerId(passengerId: string): Promise<boolean>;
+  hasActiveRideByDriverId(passengerId: string): Promise<boolean>;
 }
 
 export class RideRepositoryDatabase implements RideRepository {
@@ -55,6 +56,13 @@ export class RideRepositoryDatabase implements RideRepository {
     const [rideData] = await this.connection.query(
       "select 1 from ccca.ride where passenger_id = $1 and status not in ('completed', 'cancelled') limit 1",
       [passengerId]
+    );
+    return !!rideData;
+  }
+  async hasActiveRideByDriverId(driverId: string) {
+    const [rideData] = await this.connection.query(
+      "select 1 from ccca.ride where driver_id = $1 and status not in ('accepted', 'in_progress') limit 1",
+      [driverId]
     );
     return !!rideData;
   }

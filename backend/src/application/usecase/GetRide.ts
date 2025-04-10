@@ -3,18 +3,18 @@ import RideRepository from "../../infra/repository/RideRepository";
 
 export default class GetRide {
   constructor(
-    readonly accountDAO: AccountRepository,
-    readonly rideDAO: RideRepository
+    readonly accountRepository: AccountRepository,
+    readonly rideRepository: RideRepository
   ) {}
 
   async execute(rideId: string): Promise<Output> {
-    const ride = await this.rideDAO.getRideById(rideId);
-    const passengerAccount = await this.accountDAO.getAccountById(
+    const ride = await this.rideRepository.getRideById(rideId);
+    const passengerAccount = await this.accountRepository.getAccountById(
       ride.passengerId
     );
     return {
       ...ride,
-      passengerName: passengerAccount.name,
+      passengerName: passengerAccount.getName(),
     };
   }
 }
