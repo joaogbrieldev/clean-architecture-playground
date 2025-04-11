@@ -18,32 +18,32 @@ export class RideRepositoryDatabase implements RideRepository {
       "select * from ccca.ride where ride_id = $1",
       [rideId]
     );
-    return {
-      rideId: rideData.ride_id,
-      passengerId: rideData.passenger_id,
-      driverId: rideData.driver_id,
-      fromLat: parseFloat(rideData.from_lat),
-      fromLong: parseFloat(rideData.from_long),
-      toLat: parseFloat(rideData.to_lat),
-      toLong: parseFloat(rideData.to_long),
-      fare: parseFloat(rideData.fare),
-      distance: parseFloat(rideData.distance),
-      status: rideData.status,
-      date: rideData.date,
-    };
+    return new Ride(
+      rideData.ride_id,
+      rideData.passenger_id,
+      rideData.driver_id,
+      parseFloat(rideData.from_lat),
+      parseFloat(rideData.from_long),
+      parseFloat(rideData.to_lat),
+      parseFloat(rideData.to_long),
+      parseFloat(rideData.fare),
+      parseFloat(rideData.distance),
+      rideData.status,
+      rideData.date
+    );
   }
 
-  async saveRide(ride: any) {
+  async saveRide(ride: Ride) {
     await this.connection.query(
       "insert into ccca.ride (ride_id, passenger_id, driver_id, from_lat, from_long, to_lat, to_long, fare, distance, status, date) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
       [
         ride.rideId,
         ride.passengerId,
         ride.driverId,
-        ride.fromLat,
-        ride.fromLong,
-        ride.toLat,
-        ride.toLong,
+        ride.getFrom().getLat(),
+        ride.getFrom().getLong(),
+        ride.getTo().getLat(),
+        ride.getTo().getLong(),
         ride.fare,
         ride.distance,
         ride.status,
