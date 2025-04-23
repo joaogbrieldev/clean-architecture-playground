@@ -6,17 +6,23 @@ export default class AcceptRide {
     readonly accountRepository: AccountRepository,
     readonly rideRepository: RideRepository
   ) {}
-  async execute(rideId: string, driverId: string): Promise<void> {
-    const accountData = await this.accountRepository.getAccountById(driverId);
-    const ride = await this.rideRepository.getRideById(rideId);
-    if (ride.status !== "requested") throw new Error("");
-
-    if (!accountData.isDriver) {
-    }
-    const hasActiveRide = await this.rideRepository.hasActiveRideByDriverId(
-      driverId
+  async execute(input: Input): Promise<void> {
+    const accountData = await this.accountRepository.getAccountById(
+      input.driverId
     );
-    if (hasActiveRide) throw new Error("");
-    ride.status = driverId;
+    if (!accountData.isDriver) throw new Error("Account must be from a driver");
+    const hasActiveRide = await this.rideRepository.hasActiveRideByDriverId(
+      input.driverId
+    );
+    if (hasActiveRide) throw new Error("Passenger already have an active ride");
+    const ride = await this.rideRepository.getRideById(input.rideId);
+    if (ride.getStatus() !== "requested") throw new Error("");
+
+    ride.accept(input.driverId);
+    await this.rideRepository.updateRide(ride);
   }
 }
+type Input = {
+  rideId: string;
+  driverId: string;
+};
