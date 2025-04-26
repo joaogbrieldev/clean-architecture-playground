@@ -71,7 +71,7 @@ export default class Ride {
   }
 
   finish(positions: Position[]) {
-    if (this.status !== "in_progress") throw new Error("Invalid status");
+    if (this.status !== "in_progress") throw new Error("Invalid statuss");
     this.status = "completed";
     for (const [index, position] of positions.entries()) {
       const nextPosition = positions[index + 1];
