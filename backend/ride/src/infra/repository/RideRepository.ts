@@ -1,5 +1,6 @@
 import Ride from "../../domain/entity/Ride";
 import DatabaseConnection from "../database/DatabaseConnection";
+import { inject } from "../di/Registry";
 
 // Repository
 
@@ -12,7 +13,10 @@ export default interface RideRepository {
 }
 
 export class RideRepositoryDatabase implements RideRepository {
-  constructor(readonly connection: DatabaseConnection) {}
+  @inject("connection")
+  connection!: DatabaseConnection;
+
+  constructor() {}
 
   async getRideById(rideId: string) {
     const [rideData] = await this.connection.query(
@@ -71,8 +75,14 @@ export class RideRepositoryDatabase implements RideRepository {
 
   async updateRide(ride: Ride) {
     await this.connection.query(
-      "update ccca.ride set status = $1, driver_id = $2 where ride_id = $3",
-      [ride.getStatus(), ride.getDriverId(), ride.getRideId()]
+      "update ccca.ride set status = $1, driver_id = $2, distance = $3, fare = $4 where ride_id = $5",
+      [
+        ride.getStatus(),
+        ride.getDriverId(),
+        ride.getDistance(),
+        ride.getFare(),
+        ride.getRideId(),
+      ]
     );
   }
 }
