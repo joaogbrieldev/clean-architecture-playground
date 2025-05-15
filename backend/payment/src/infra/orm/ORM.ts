@@ -20,7 +20,6 @@ export default class ORM {
   async get(model: any, field: string, value: any) {
     const query = `select * from ${model.prototype.schema}.${model.prototype.table} where ${field} = $1`;
     const [data] = await this.connection.query(query, [value]);
-    console.log(data);
     if (!data) throw new Error("Row not found");
     const obj = new model();
     for (const column of model.prototype.columns) {

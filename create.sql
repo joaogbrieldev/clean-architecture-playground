@@ -14,25 +14,25 @@ create table ccca.account (
 );
 
 create table ccca.ride (
-ride_id uuid,
-passenger_id uuid,
-driver_id uuid,
-status text,
-fare numeric,
-distance numeric,
-from_lat numeric,
-from_long numeric,
-to_lat numeric,
-to_long numeric,
-date timestamp
+	ride_id uuid,
+	passenger_id uuid,
+	driver_id uuid,
+	status text,
+	fare numeric,
+	distance numeric,
+	from_lat numeric,
+	from_long numeric,
+	to_lat numeric,
+	to_long numeric,
+	date timestamp
 );
 
 create table ccca.position (
-position_id uuid,
-ride_id uuid,
-lat numeric,
-long numeric,
-date timestamp
+	position_id uuid,
+	ride_id uuid,
+	lat numeric,
+	long numeric,
+	date timestamp
 );
 
 create table ccca.transaction (
@@ -41,4 +41,16 @@ create table ccca.transaction (
 	amount numeric,
 	status text,
 	date timestamp
-)
+);
+
+create table ccca.ride_projection (
+	ride_id uuid,
+	passenger_name text,
+	driver_name text,
+	fare numeric,
+	distance numeric,
+	status text,
+	transaction_id uuid,
+	transaction_amount numeric,
+	transaction_status text
+);

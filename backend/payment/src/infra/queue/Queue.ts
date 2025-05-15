@@ -17,13 +17,11 @@ export class RabbitMQAdapter implements Queue {
 
   async publish(event: string, input: any): Promise<void> {
     const channel = await this.connection.createChannel();
-    await channel.assertQueue(event, { durable: true });
-    channel.sendToQueue(event, Buffer.from(JSON.stringify(input)));
+    channel.publish(event, "", Buffer.from(JSON.stringify(input)));
   }
 
   async consume(event: string, callback: Function): Promise<void> {
     const channel = await this.connection.createChannel();
-    await channel.assertQueue(event, { durable: true });
     channel.consume(event, async (message: any) => {
       const input = JSON.parse(message.content.toString());
       await callback(input);
