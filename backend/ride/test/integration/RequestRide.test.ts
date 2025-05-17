@@ -1,7 +1,6 @@
 import AcceptRide from "../../src/application/usecase/AcceptRide";
 import FinishRide from "../../src/application/usecase/FinishRide";
 import GetRide from "../../src/application/usecase/GetRide";
-import ProcessPayment from "../../src/application/usecase/ProcessPayment";
 import RequestRide from "../../src/application/usecase/RequestRide";
 import StartRide from "../../src/application/usecase/StartRide";
 import UpdatePosition from "../../src/application/usecase/UpdatePosition";
@@ -14,9 +13,9 @@ import AccountGateway, {
 } from "../../src/infra/gateway/AccountGateway";
 import { AxiosAdapter } from "../../src/infra/http/HttpClient";
 import ORM from "../../src/infra/orm/ORM";
+import { RabbitMQAdapter } from "../../src/infra/queue/Queue";
 import { PositionRepositoryDatabase } from "../../src/infra/repository/PositionRepository";
 import { RideRepositoryDatabase } from "../../src/infra/repository/RideRepository";
-import { TransactionRepositoryDatabase } from "../../src/infra/repository/TransactionRepository";
 
 let connection: DatabaseConnection;
 let requestRide: RequestRide;
@@ -27,17 +26,24 @@ let updatePosition: UpdatePosition;
 let accountGateway: AccountGateway;
 let finishRide: FinishRide;
 
+async function sleep(time: number) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(true);
+    }, time);
+  });
+}
+
 beforeEach(async () => {
   Registry.getInstance().provide("httpClient", new AxiosAdapter());
   connection = new PgPromiseAdapter();
   Registry.getInstance().provide("connection", connection);
   accountGateway = new AccountGatewayHttp();
+  const queue = new RabbitMQAdapter();
+  await queue.connect();
+  Registry.getInstance().provide("queue", queue);
   Registry.getInstance().provide("accountGateway", accountGateway);
   Registry.getInstance().provide("orm", new ORM());
-  Registry.getInstance().provide(
-    "transactionRepository",
-    new TransactionRepositoryDatabase()
-  );
   Registry.getInstance().provide(
     "rideRepository",
     new RideRepositoryDatabase()
@@ -46,7 +52,6 @@ beforeEach(async () => {
     "positionRepository",
     new PositionRepositoryDatabase()
   );
-  Registry.getInstance().provide("processPayment", new ProcessPayment());
   requestRide = new RequestRide();
   acceptRide = new AcceptRide();
   startRide = new StartRide();
@@ -74,7 +79,7 @@ test("Deve solicitar uma corrida", async function () {
   const outputRequestRide = await requestRide.execute(inputRequestRide);
   expect(outputRequestRide.rideId).toBeDefined();
   const outputGetRide = await getRide.execute(outputRequestRide.rideId);
-  console.log(outputGetRide);
+
   expect(outputGetRide.rideId).toBe(outputRequestRide.rideId);
   expect(outputGetRide.passengerId).toBe(outputSignup.accountId);
   expect(outputGetRide.passengerName).toBe(inputSignup.name);

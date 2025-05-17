@@ -1,11 +1,11 @@
 export default class Password {
-  private value: string;
+    private value: string;
 
-  constructor(password: string) {
-    this.value = password;
-  }
+    constructor (password: string) {
+        this.value = password;
+    }
 
-  getValue() {
-    return this.value;
-  }
+    getValue () {
+        return this.value;
+    }
 }

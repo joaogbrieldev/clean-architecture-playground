@@ -1,7 +1,8 @@
+import GetRideCQRS from "../../src/application/query/GetRideCQRS";
+import GetRideQuery from "../../src/application/query/GetRideQuery";
 import AcceptRide from "../../src/application/usecase/AcceptRide";
 import FinishRide from "../../src/application/usecase/FinishRide";
 import GetRide from "../../src/application/usecase/GetRide";
-import ProcessPayment from "../../src/application/usecase/ProcessPayment";
 import RequestRide from "../../src/application/usecase/RequestRide";
 import StartRide from "../../src/application/usecase/StartRide";
 import UpdatePosition from "../../src/application/usecase/UpdatePosition";
@@ -12,21 +13,26 @@ import Registry from "../../src/infra/di/Registry";
 import AccountGateway, {
   AccountGatewayHttp,
 } from "../../src/infra/gateway/AccountGateway";
+import PaymentGateway, {
+  PaymentGatewayHttp,
+} from "../../src/infra/gateway/PaymentGateway";
 import { AxiosAdapter } from "../../src/infra/http/HttpClient";
 import ORM from "../../src/infra/orm/ORM";
 import { RabbitMQAdapter } from "../../src/infra/queue/Queue";
 import { PositionRepositoryDatabase } from "../../src/infra/repository/PositionRepository";
 import { RideRepositoryDatabase } from "../../src/infra/repository/RideRepository";
-import { TransactionRepositoryDatabase } from "../../src/infra/repository/TransactionRepository";
 
 let connection: DatabaseConnection;
 let requestRide: RequestRide;
 let getRide: GetRide;
+let getRideQuery: GetRideQuery;
+let getRideCQRS: GetRideCQRS;
 let acceptRide: AcceptRide;
 let startRide: StartRide;
 let updatePosition: UpdatePosition;
 let accountGateway: AccountGateway;
 let finishRide: FinishRide;
+let paymentGateway: PaymentGateway;
 
 async function sleep(time: number) {
   return new Promise((resolve) => {
@@ -42,14 +48,12 @@ beforeEach(async () => {
   Registry.getInstance().provide("connection", connection);
   accountGateway = new AccountGatewayHttp();
   Registry.getInstance().provide("accountGateway", accountGateway);
+  paymentGateway = new PaymentGatewayHttp();
+  Registry.getInstance().provide("paymentGateway", paymentGateway);
   const queue = new RabbitMQAdapter();
   await queue.connect();
   Registry.getInstance().provide("queue", queue);
   Registry.getInstance().provide("orm", new ORM());
-  Registry.getInstance().provide(
-    "transactionRepository",
-    new TransactionRepositoryDatabase()
-  );
   Registry.getInstance().provide(
     "rideRepository",
     new RideRepositoryDatabase()
@@ -58,13 +62,14 @@ beforeEach(async () => {
     "positionRepository",
     new PositionRepositoryDatabase()
   );
-  Registry.getInstance().provide("processPayment", new ProcessPayment());
   requestRide = new RequestRide();
   acceptRide = new AcceptRide();
   startRide = new StartRide();
   updatePosition = new UpdatePosition();
   finishRide = new FinishRide();
   getRide = new GetRide();
+  getRideQuery = new GetRideQuery();
+  getRideCQRS = new GetRideCQRS();
 });
 
 test("Deve finalizar uma corrida em horário comercial", async function () {
@@ -308,7 +313,7 @@ test("Deve finalizar uma corrida em horário comercial", async function () {
     rideId: outputRequestRide.rideId,
   };
   await finishRide.execute(inputFinishRide);
-  await sleep(200);
+  await sleep(500);
   const outputGetRide = await getRide.execute(outputRequestRide.rideId);
   expect(outputGetRide.status).toBe("completed");
   expect(outputGetRide.distance).toBe(10);

@@ -1,12 +1,12 @@
-// Entry Point - Composition Root
-
+import { AccountRepositoryDatabase } from "./infra/repository/AccountRepository";
 import GetAccount from "./application/usecase/GetAccount";
 import Signup from "./application/usecase/Signup";
-import AccountController from "./infra/controller/AccountController";
-import { PgPromiseAdapter } from "./infra/database/DatabaseConnection";
 import { MailerGatewayMemory } from "./infra/gateway/MailerGateway";
-import { ExpressAdapter } from "./infra/http/HttpServer";
-import { AccountRepositoryDatabase } from "./infra/repository/AccountRepository";
+import { PgPromiseAdapter } from "./infra/database/DatabaseConnection";
+import { ExpressAdapter, HapiAdapter } from "./infra/http/HttpServer";
+import AccountController from "./infra/controller/AccountController";
+
+// Entry Point - Composition Root
 
 const httpServer = new ExpressAdapter();
 // const httpServer = new HapiAdapter();

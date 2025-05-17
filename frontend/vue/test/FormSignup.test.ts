@@ -1,0 +1,67 @@
+import FormSignup from "../src/entity/FormSignup";
+
+test("Deve testar o fluxo de progresso no preenchimento do wizard", function () {
+    const form = new FormSignup();
+    expect(form.calculateProgress()).toBe(0);
+    expect(form.step).toBe(1);
+    form.isPassenger = true;
+    expect(form.calculateProgress()).toBe(25);
+    form.next();
+    expect(form.step).toBe(2);
+    form.name = "John Doe";
+    expect(form.calculateProgress()).toBe(45);
+    form.email = "john.doe@gmail.com";
+    expect(form.calculateProgress()).toBe(65);
+    form.cpf = "12345678910";
+    expect(form.calculateProgress()).toBe(85);
+    form.next();
+    expect(form.step).toBe(3);
+    form.password = "123456";
+    expect(form.calculateProgress()).toBe(85);
+    form.confirmPassword = "1234";
+    expect(form.calculateProgress()).toBe(85);
+    form.confirmPassword = "123456";
+    expect(form.calculateProgress()).toBe(100);
+});
+
+test("Deve testar a validação dos campos e o controle do preenchimento do wizard", function () {
+    let event: any;
+    const form = new FormSignup();
+    form.register("confirmed", function (input: any) {
+        event = input;
+    });
+    form.next();
+    expect(form.step).toBe(1);
+    expect(form.error).toBe("Selecione o tipo de conta");
+    form.isPassenger = true;
+    form.next();
+    expect(form.error).toBe("");
+    expect(form.step).toBe(2);
+    form.next();
+    expect(form.error).toBe("Preencha o nome");
+    form.name = "John Doe";
+    form.next();
+    expect(form.error).toBe("Preencha o email");
+    form.email = "john.doe@gmail.com";
+    form.next();
+    expect(form.error).toBe("Preencha o cpf");
+    form.cpf = "12345678910";
+    form.next();
+    expect(form.error).toBe("");
+    expect(form.step).toBe(3);
+    form.confirm();
+    expect(form.error).toBe("Preencha a senha");
+    form.password = "123456";
+    form.confirm();
+    expect(form.error).toBe("Preencha a confirmação da senha");
+    form.confirmPassword = "1234";
+    form.confirm();
+    expect(form.error).toBe("A senha e a confirmação da senha devem ser iguais");
+    form.confirmPassword = "123456";
+    form.confirm();
+    expect(event?.isPassenger).toBe(true);
+    expect(event?.name).toBe("John Doe");
+    expect(event?.email).toBe("john.doe@gmail.com");
+    expect(event?.cpf).toBe("12345678910");
+    expect(event?.password).toBe("123456");
+});
